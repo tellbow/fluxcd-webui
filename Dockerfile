@@ -33,6 +33,7 @@ RUN npm install --silent
 ## Add kubeconfig somehow
 
 COPY process_wrapper.sh /usr/src/app/webui
+RUN chmod u+x /usr/src/app/webui/process_wrapper.sh
 
 EXPOSE 1234
 CMD [ "/usr/src/app/webui/process_wrapper.sh" ]
