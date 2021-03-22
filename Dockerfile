@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:14-alpine AS builder
 
 # in order to get go to run properly, whe need this symlink
 RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
@@ -28,12 +28,22 @@ RUN git clone https://github.com/fluxcd/webui.git .
 
 RUN mkdir dist
 
-RUN npm install --silent
+RUN npm install --silent &&\
+go build -o backend
 
 ## Add kubeconfig somehow
 
+FROM node:14-alpine
+
+# in order to get go to run properly, whe need this symlink
+RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+
+WORKDIR /usr/src/app/webui
+
+COPY --from=builder /usr/src/app/webui/ /usr/src/app/webui
 COPY process_wrapper.sh /usr/src/app/webui
-RUN chmod u+x /usr/src/app/webui/process_wrapper.sh
+RUN chmod u+x /usr/src/app/webui/process_wrapper.sh &&\
+sed -i 's/localhost:3000/localhost:9000/g' /usr/src/app/webui/dev-server.js
 
 EXPOSE 1234
 CMD [ "/usr/src/app/webui/process_wrapper.sh" ]
